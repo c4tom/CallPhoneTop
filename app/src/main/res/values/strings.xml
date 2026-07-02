@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">OTP Authenticator</string>
+    <string name="search_hint">Buscar contas...</string>
+    <string name="add_manually">Adicionar Manualmente</string>
+    <string name="add_from_qr">Adicionar via Imagem QR</string>
+    <string name="export_backup">Exportar Backup (JSON)</string>
+    <string name="import_backup">Importar Backup (JSON)</string>
+    <string name="label_display_name">Nome de Exibição</string>
+    <string name="label_issuer">Emissor (Ex: Google, GitHub)</string>
+    <string name="label_account">Nome da Conta (Ex: email)</string>
+    <string name="label_secret">Chave Secreta (Base32)</string>
+    <string name="label_algorithm">Algoritmo</string>
+    <string name="label_digits">Dígitos</string>
+    <string name="label_period">Período (segundos)</string>
+    <string name="btn_save">Salvar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="copied_to_clipboard">Copiado para a área de transferência</string>
+    <string name="invalid_secret">Chave secreta inválida (deve ser Base32)</string>
+    <string name="empty_entries">Nenhuma conta cadastrada</string>
+    <string name="empty_entries_sub">Adicione sua primeira conta importando um QR code ou inserindo os dados manualmente.</string>
+    <string name="confirm_delete_title">Excluir Conta</string>
+    <string name="confirm_delete_msg">Tem certeza que deseja excluir \"%s\"? Esta ação não pode ser desfeita e você poderá perder o acesso à sua conta se não tiver backup.</string>
+    <string name="btn_delete">Excluir</string>
+    <string name="reveal_sec">Revelado por %ds</string>
+</resources>

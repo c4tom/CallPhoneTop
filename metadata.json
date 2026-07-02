@@ -1,0 +1,6 @@
+{
+  "name": "OTP Authenticator",
+  "description": "Secure, offline 2FA/TOTP authenticator with Keystore encryption, manual entry, backup/restore, and QR image imports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
