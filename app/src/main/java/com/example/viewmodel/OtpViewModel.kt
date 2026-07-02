@@ -82,6 +82,10 @@ class OtpViewModel(application: Application) : AndroidViewModel(application) {
         _revealedEntries.value = current
     }
 
+    fun hideAllSecrets() {
+        _revealedEntries.value = emptyMap()
+    }
+
     fun addManual(
         displayName: String,
         issuer: String,

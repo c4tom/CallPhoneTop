@@ -56,11 +56,26 @@ import com.example.util.QrCodeHelper
 import com.example.util.TotpGenerator
 import com.example.viewmodel.ImportStatus
 import com.example.viewmodel.OtpViewModel
+import com.example.viewmodel.VaultViewModel
 import com.example.ui.components.CameraQrScannerDialog
+import com.example.ui.components.VaultMainView
+import com.example.ui.components.PasswordGeneratorView
+import com.example.ui.components.SecurityHealthView
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 class MainActivity : ComponentActivity() {
+  private var onInteraction: (() -> Unit)? = null
+
+  override fun onUserInteraction() {
+    super.onUserInteraction()
+    onInteraction?.invoke()
+  }
+
+  fun setOnUserInteractionListener(listener: (() -> Unit)?) {
+    onInteraction = listener
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
@@ -88,10 +103,36 @@ fun OtpAppScreen(
   viewModel: OtpViewModel = viewModel()
 ) {
   val context = LocalContext.current
+  val vaultViewModel: VaultViewModel = viewModel()
+  var activeTab by remember { mutableStateOf(0) }
+  val isVaultSet by vaultViewModel.isMasterPasswordSet.collectAsStateWithLifecycle()
+  val isVaultUnlocked by vaultViewModel.isUnlocked.collectAsStateWithLifecycle()
   val entries by viewModel.filteredEntries.collectAsStateWithLifecycle()
   val currentTime by viewModel.currentTime.collectAsStateWithLifecycle()
   val revealedSecrets by viewModel.revealedEntries.collectAsStateWithLifecycle()
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
+  // Track Inactivity & Auto-Lock
+  val secondsRemaining by vaultViewModel.secondsRemaining.collectAsStateWithLifecycle()
+  val activity = context as? MainActivity
+
+  DisposableEffect(activity) {
+    activity?.setOnUserInteractionListener {
+      vaultViewModel.resetInactivityTimer()
+    }
+    onDispose {
+      activity?.setOnUserInteractionListener(null)
+    }
+  }
+
+  LaunchedEffect(secondsRemaining) {
+    if (secondsRemaining == 0) {
+      if (revealedSecrets.isNotEmpty()) {
+        viewModel.hideAllSecrets()
+      }
+      Toast.makeText(context, "Sessão bloqueada por inatividade de 5 minutos.", Toast.LENGTH_LONG).show()
+    }
+  }
 
   // State management for dialogs
   var showCameraScanner by remember { mutableStateOf(false) }
@@ -163,12 +204,51 @@ fun OtpAppScreen(
     }
   }
 
-  Box(modifier = Modifier.fillMaxSize()) {
-    Column(
-      modifier = modifier
+  Scaffold(
+    modifier = modifier.fillMaxSize(),
+    bottomBar = {
+      NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
+      ) {
+        NavigationBarItem(
+          icon = { Icon(Icons.Default.Shield, contentDescription = "Autenticador") },
+          label = { Text("MFA") },
+          selected = activeTab == 0,
+          onClick = { activeTab = 0 }
+        )
+        NavigationBarItem(
+          icon = { Icon(Icons.Default.Lock, contentDescription = "Cofre") },
+          label = { Text("Cofre") },
+          selected = activeTab == 1,
+          onClick = { activeTab = 1 }
+        )
+        NavigationBarItem(
+          icon = { Icon(Icons.Default.Autorenew, contentDescription = "Gerador") },
+          label = { Text("Gerador") },
+          selected = activeTab == 2,
+          onClick = { activeTab = 2 }
+        )
+        NavigationBarItem(
+          icon = { Icon(Icons.Default.Security, contentDescription = "Saúde") },
+          label = { Text("Saúde") },
+          selected = activeTab == 3,
+          onClick = { activeTab = 3 }
+        )
+      }
+    }
+  ) { paddingValues ->
+    Box(
+      modifier = Modifier
         .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)
+        .padding(paddingValues)
     ) {
+      if (activeTab == 0) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+        ) {
     // Elegant Top Bar with brand logo box
     Row(
       modifier = Modifier
@@ -471,6 +551,111 @@ fun OtpAppScreen(
             onMoveDown = { viewModel.moveEntryDown(entry) },
             secretText = viewModel.decryptSecret(entry)
           )
+        }
+      }
+    }
+    }
+  } else if (activeTab == 1) {
+        VaultMainView(viewModel = vaultViewModel)
+      } else if (activeTab == 2) {
+        Column(modifier = Modifier.fillMaxSize()) {
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              Box(
+                modifier = Modifier
+                  .size(40.dp)
+                  .clip(RoundedCornerShape(12.dp))
+                  .background(MaterialTheme.colorScheme.primary)
+                  .padding(8.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Autorenew,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onPrimary,
+                  modifier = Modifier.size(24.dp)
+                )
+              }
+              Column {
+                Text(
+                  text = "Gerador de Senhas",
+                  fontSize = 20.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                  text = "Crie senhas seguras instantaneamente",
+                  fontSize = 11.sp,
+                  color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                )
+              }
+            }
+            if (isVaultSet && isVaultUnlocked) {
+              IconButton(onClick = { vaultViewModel.lockVault() }) {
+                Icon(imageVector = Icons.Default.Lock, contentDescription = "Bloquear Cofre", tint = MaterialTheme.colorScheme.primary)
+              }
+            }
+          }
+          PasswordGeneratorView(viewModel = vaultViewModel)
+        }
+      } else {
+        Column(modifier = Modifier.fillMaxSize()) {
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              Box(
+                modifier = Modifier
+                  .size(40.dp)
+                  .clip(RoundedCornerShape(12.dp))
+                  .background(MaterialTheme.colorScheme.primary)
+                  .padding(8.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Security,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onPrimary,
+                  modifier = Modifier.size(24.dp)
+                )
+              }
+              Column {
+                Text(
+                  text = "Análise de Segurança",
+                  fontSize = 20.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                  text = "Auditoria de senhas e integridade",
+                  fontSize = 11.sp,
+                  color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                )
+              }
+            }
+            if (isVaultSet && isVaultUnlocked) {
+              IconButton(onClick = { vaultViewModel.lockVault() }) {
+                Icon(imageVector = Icons.Default.Lock, contentDescription = "Bloquear Cofre", tint = MaterialTheme.colorScheme.primary)
+              }
+            }
+          }
+          SecurityHealthView(viewModel = vaultViewModel)
         }
       }
     }
@@ -846,7 +1031,6 @@ fun OtpAppScreen(
         }
       }
     )
-  }
   }
 }
 
