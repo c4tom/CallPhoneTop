@@ -70,13 +70,18 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun seedMockContacts() {
         val mockData = listOf(
-            Contact(name = "Ana Silva (Financeiro)", phoneNumber = "+55 11 98765-4321", email = "ana.silva@empresa.com.br", note = "Gerente de contas", avatarColor = 0, isFavorite = true),
-            Contact(name = "Carlos Souza (Desenvolvedor)", phoneNumber = "+55 21 99888-7766", email = "carlos.souza@tech.io", note = "Time de infraestrutura", avatarColor = 1, isFavorite = false),
-            Contact(name = "Dr. Roberto (Dentista)", phoneNumber = "+55 11 3456-7890", email = "roberto.odonto@gmail.com", note = "Agendar a cada 6 meses", avatarColor = 2, isFavorite = false),
-            Contact(name = "Marta Ferreira", phoneNumber = "+55 31 99123-4567", email = "marta.ferreira@hotmail.com", note = "Família", avatarColor = 3, isFavorite = true),
-            Contact(name = "Pizzaria Bella Italia", phoneNumber = "+55 11 4004-8282", email = "contato@bellaitaliapizza.com", note = "Melhor pizza de marguerita", avatarColor = 4, isFavorite = false),
-            Contact(name = "Suporte Claro", phoneNumber = "1052", email = "", note = "Atendimento ao cliente", avatarColor = 5, isFavorite = false),
-            Contact(name = "Suporte Técnico", phoneNumber = "***208###", email = "sec.support@authenticator.net", note = "Contato administrativo seguro", avatarColor = 6, isFavorite = true)
+            Contact(name = "Jane Cooper", phoneNumber = "+1 (555) 0123-4567", email = "jane.cooper@example.com", note = "Verified Profile ✓ Identified by CallNix Security", avatarColor = 0, isFavorite = true),
+            Contact(name = "Aaron Smith", phoneNumber = "+1 (555) 000-1234", email = "aaron.smith@gmail.com", note = "Mobile • Amigo", avatarColor = 1, isFavorite = false),
+            Contact(name = "Alice Brown", phoneNumber = "+1 (555) 000-5678", email = "alice.brown@work.com", note = "Work • Verified Contact", avatarColor = 2, isFavorite = true),
+            Contact(name = "Bella Thorne", phoneNumber = "+1 (555) 111-2233", email = "bella.t@music.com", note = "Mobile • Faculdade", avatarColor = 3, isFavorite = false),
+            Contact(name = "Caleb Rivers", phoneNumber = "+1 (555) 444-5566", email = "caleb.r@home.com", note = "Home • Família", avatarColor = 4, isFavorite = false),
+            Contact(name = "Diana Prince", phoneNumber = "+1 (555) 999-0011", email = "diana@justice.org", note = "Work • Verified Contact", avatarColor = 5, isFavorite = true),
+            Contact(name = "Mom", phoneNumber = "+1 (555) 888-9999", email = "mom@family.com", note = "Last called 2h ago • Mãe", avatarColor = 6, isFavorite = true),
+            Contact(name = "Dad", phoneNumber = "+1 (555) 777-6666", email = "dad@family.com", note = "Home • Mobile • Pai", avatarColor = 7, isFavorite = true),
+            Contact(name = "Sarah Jenkins", phoneNumber = "+1 (555) 222-3333", email = "sarah.j@work.com", note = "Work • Manager", avatarColor = 8, isFavorite = true),
+            Contact(name = "Mike Ross", phoneNumber = "+1 (555) 444-3333", email = "mike.ross@pearson.com", note = "Personal • Online", avatarColor = 9, isFavorite = true),
+            Contact(name = "Pizzaria Bella Italia", phoneNumber = "+55 11 4004-8282", email = "contato@bellaitaliapizza.com", note = "Melhor pizza de marguerita (Verified: Pizza Shop)", avatarColor = 10, isFavorite = false),
+            Contact(name = "Suporte Técnico", phoneNumber = "***208###", email = "sec.support@authenticator.net", note = "Contato administrativo seguro", avatarColor = 11, isFavorite = true)
         )
         for (contact in mockData) {
             repository.insertContact(contact)
