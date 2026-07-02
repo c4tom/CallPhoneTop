@@ -57,6 +57,7 @@ import com.example.util.TotpGenerator
 import com.example.viewmodel.ImportStatus
 import com.example.viewmodel.OtpViewModel
 import com.example.viewmodel.VaultViewModel
+import com.example.viewmodel.ContactViewModel
 import com.example.ui.components.CameraQrScannerDialog
 import com.example.ui.components.VaultMainView
 import com.example.ui.components.PasswordGeneratorView
@@ -104,6 +105,8 @@ fun OtpAppScreen(
 ) {
   val context = LocalContext.current
   val vaultViewModel: VaultViewModel = viewModel()
+  val contactViewModel: ContactViewModel = viewModel()
+  
   var activeTab by remember { mutableStateOf(0) }
   val isVaultSet by vaultViewModel.isMasterPasswordSet.collectAsStateWithLifecycle()
   val isVaultUnlocked by vaultViewModel.isUnlocked.collectAsStateWithLifecycle()
@@ -111,6 +114,9 @@ fun OtpAppScreen(
   val currentTime by viewModel.currentTime.collectAsStateWithLifecycle()
   val revealedSecrets by viewModel.revealedEntries.collectAsStateWithLifecycle()
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+  
+  val isOtpUnlocked by contactViewModel.isOtpUnlocked.collectAsStateWithLifecycle()
+  val isDisguiseEnabled by contactViewModel.isDisguiseEnabled.collectAsStateWithLifecycle()
 
   // Track Inactivity & Auto-Lock
   val secondsRemaining by vaultViewModel.secondsRemaining.collectAsStateWithLifecycle()
@@ -130,6 +136,7 @@ fun OtpAppScreen(
       if (revealedSecrets.isNotEmpty()) {
         viewModel.hideAllSecrets()
       }
+      contactViewModel.lockOtp()
       Toast.makeText(context, "Sessão bloqueada por inatividade de 5 minutos.", Toast.LENGTH_LONG).show()
     }
   }
@@ -204,10 +211,18 @@ fun OtpAppScreen(
     }
   }
 
-  Scaffold(
-    modifier = modifier.fillMaxSize(),
-    bottomBar = {
-      NavigationBar(
+  if (isDisguiseEnabled && !isOtpUnlocked) {
+    com.example.ui.components.DisguiseView(
+      contactViewModel = contactViewModel,
+      onUnlockApp = {
+        contactViewModel.unlockOtp()
+      }
+    )
+  } else {
+    Scaffold(
+      modifier = modifier.fillMaxSize(),
+      bottomBar = {
+        NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
       ) {
@@ -1031,6 +1046,7 @@ fun OtpAppScreen(
         }
       }
     )
+  }
   }
 }
 

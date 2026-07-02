@@ -11,6 +11,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -1356,6 +1358,7 @@ fun SecurityHealthView(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1611,6 +1614,191 @@ fun SecurityHealthView(
                     )
                 }
             }
+        }
+
+        // Disguise Settings Card (Camada de Disfarce)
+        val contactViewModel: com.example.viewmodel.ContactViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        val disguiseEnabled by contactViewModel.isDisguiseEnabled.collectAsStateWithLifecycle()
+        val bioEnabled by contactViewModel.isBiometricsEnabled.collectAsStateWithLifecycle()
+        val secretPin by contactViewModel.secretCode.collectAsStateWithLifecycle()
+
+        var showEditPinDialog by remember { mutableStateOf(false) }
+        var tempPin by remember { mutableStateOf(secretPin) }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhoneAndroid,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Camada de Disfarce",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Mascarar aplicativo como um discador telefônico.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+
+                Divider()
+
+                // Row 1: Enable disguise switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Habilitar Mascaramento",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Abre o discador ao iniciar o aplicativo.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                    Switch(
+                        checked = disguiseEnabled,
+                        onCheckedChange = { contactViewModel.setDisguiseEnabled(it) },
+                        modifier = Modifier.testTag("disguise_enable_switch")
+                    )
+                }
+
+                if (disguiseEnabled) {
+                    // Row 2: Biometrics switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Autenticação Biométrica",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Solicitar digital ou face após discar o código.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        Switch(
+                            checked = bioEnabled,
+                            onCheckedChange = { contactViewModel.setBiometricsEnabled(it) },
+                            modifier = Modifier.testTag("disguise_bio_switch")
+                        )
+                    }
+
+                    // Row 3: Customize secret code
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Código Secreto de Entrada",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Código ativo atual: $secretPin",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                tempPin = secretPin
+                                showEditPinDialog = true
+                            },
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.height(36.dp).testTag("disguise_change_pin_btn")
+                        ) {
+                            Text("Alterar", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showEditPinDialog) {
+            AlertDialog(
+                onDismissRequest = { showEditPinDialog = false },
+                title = { Text("Alterar Código Secreto") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Digite seu novo código secreto de entrada (padrão: ***208###). Recomendamos usar caracteres como * ou #.",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        OutlinedTextField(
+                            value = tempPin,
+                            onValueChange = { tempPin = it },
+                            label = { Text("Novo Código") },
+                            modifier = Modifier.fillMaxWidth().testTag("disguise_new_pin_input"),
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (tempPin.isNotBlank()) {
+                                contactViewModel.setSecretCode(tempPin.trim())
+                                showEditPinDialog = false
+                                Toast.makeText(context, "Código alterado com sucesso!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        enabled = tempPin.isNotBlank(),
+                        modifier = Modifier.testTag("disguise_confirm_new_pin_btn")
+                    ) {
+                        Text("Salvar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEditPinDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
