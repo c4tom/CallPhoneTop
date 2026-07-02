@@ -55,11 +55,30 @@ object CryptoManager {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             val spec = GCMParameterSpec(128, iv)
             cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
-            val decryptedBytes = cipher.doFinal(encryptedBytes)
+    val decryptedBytes = cipher.doFinal(encryptedBytes)
             return String(decryptedBytes, Charsets.UTF_8)
         } catch (e: Exception) {
             e.printStackTrace()
             return ""
         }
+    }
+
+    /**
+     * Helper to encrypt a string and return it packed with its IV as "ciphertext:iv".
+     */
+    fun encryptField(plainText: String): String {
+        if (plainText.isEmpty()) return ""
+        val (encrypted, iv) = encrypt(plainText)
+        return "$encrypted:$iv"
+    }
+
+    /**
+     * Helper to decrypt a string packed as "ciphertext:iv".
+     */
+    fun decryptField(encryptedField: String): String {
+        if (encryptedField.isEmpty()) return ""
+        val parts = encryptedField.split(":")
+        if (parts.size != 2) return ""
+        return decrypt(parts[0], parts[1])
     }
 }

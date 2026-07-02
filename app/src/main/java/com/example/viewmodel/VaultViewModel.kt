@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.security.SecureRandom
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: VaultRepository
@@ -211,11 +213,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun hashPassword(password: String, salt: ByteArray): String {
         return try {
-            val digest = MessageDigest.getInstance("SHA-256")
-            digest.reset()
-            digest.update(salt)
-            val hashedBytes = digest.digest(password.toByteArray(Charsets.UTF_8))
-            Base64.encodeToString(hashedBytes, Base64.NO_WRAP)
+            val spec = PBEKeySpec(password.toCharArray(), salt, 100000, 256)
+            val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val keyBytes = factory.generateSecret(spec).encoded
+            Base64.encodeToString(keyBytes, Base64.NO_WRAP)
         } catch (e: Exception) {
             e.printStackTrace()
             ""

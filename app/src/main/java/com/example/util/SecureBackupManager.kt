@@ -13,7 +13,7 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 object SecureBackupManager {
-    private const val ITERATIONS = 15000
+    private const val ITERATIONS = 600000
     private const val KEY_LENGTH = 256
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val MARKER = "SECURE_AUTHENTICATOR_VAULT_BACKUP_v1"

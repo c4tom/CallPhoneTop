@@ -61,21 +61,47 @@ object CloudStorageManager {
         val providerStr = prefs.getString("provider", CloudProvider.GOOGLE_DRIVE.name) ?: CloudProvider.GOOGLE_DRIVE.name
         val provider = try { CloudProvider.valueOf(providerStr) } catch (e: Exception) { CloudProvider.GOOGLE_DRIVE }
         
+        // Decrypt or fall back to legacy plain text
+        val rawClientSecret = prefs.getString("clientSecret_enc", "") ?: ""
+        val clientSecret = if (rawClientSecret.isNotEmpty()) CryptoManager.decryptField(rawClientSecret) else {
+            prefs.getString("clientSecret", "") ?: ""
+        }
+
+        val rawCustomToken = prefs.getString("customAccessToken_enc", "") ?: ""
+        val customAccessToken = if (rawCustomToken.isNotEmpty()) CryptoManager.decryptField(rawCustomToken) else {
+            prefs.getString("customAccessToken", "") ?: ""
+        }
+
+        val rawS3AccessKey = prefs.getString("s3AccessKey_enc", "") ?: ""
+        val s3AccessKey = if (rawS3AccessKey.isNotEmpty()) CryptoManager.decryptField(rawS3AccessKey) else {
+            prefs.getString("s3AccessKey", "") ?: ""
+        }
+
+        val rawS3SecretKey = prefs.getString("s3SecretKey_enc", "") ?: ""
+        val s3SecretKey = if (rawS3SecretKey.isNotEmpty()) CryptoManager.decryptField(rawS3SecretKey) else {
+            prefs.getString("s3SecretKey", "") ?: ""
+        }
+
+        val rawSftpPass = prefs.getString("sftpPass_enc", "") ?: ""
+        val sftpPass = if (rawSftpPass.isNotEmpty()) CryptoManager.decryptField(rawSftpPass) else {
+            prefs.getString("sftpPass", "") ?: ""
+        }
+
         val config = CloudConfig(
             provider = provider,
             isEnabled = prefs.getBoolean("isEnabled", false),
             folderName = prefs.getString("folderName", "VaultBackups") ?: "VaultBackups",
             clientId = prefs.getString("clientId", "") ?: "",
-            clientSecret = prefs.getString("clientSecret", "") ?: "",
-            customAccessToken = prefs.getString("customAccessToken", "") ?: "",
+            clientSecret = clientSecret,
+            customAccessToken = customAccessToken,
             s3BucketName = prefs.getString("s3BucketName", "") ?: "",
             s3Region = prefs.getString("s3Region", "") ?: "",
-            s3AccessKey = prefs.getString("s3AccessKey", "") ?: "",
-            s3SecretKey = prefs.getString("s3SecretKey", "") ?: "",
+            s3AccessKey = s3AccessKey,
+            s3SecretKey = s3SecretKey,
             sftpHost = prefs.getString("sftpHost", "") ?: "",
             sftpPort = prefs.getInt("sftpPort", 22),
             sftpUser = prefs.getString("sftpUser", "") ?: "",
-            sftpPass = prefs.getString("sftpPass", "") ?: "",
+            sftpPass = sftpPass,
             sftpPath = prefs.getString("sftpPath", "/home/backups/") ?: "/home/backups/"
         )
         _currentConfig.value = config
@@ -88,17 +114,31 @@ object CloudStorageManager {
             putBoolean("isEnabled", config.isEnabled)
             putString("folderName", config.folderName)
             putString("clientId", config.clientId)
-            putString("clientSecret", config.clientSecret)
-            putString("customAccessToken", config.customAccessToken)
+            
+            // Securely encrypt sensitive fields
+            putString("clientSecret_enc", CryptoManager.encryptField(config.clientSecret))
+            putString("customAccessToken_enc", CryptoManager.encryptField(config.customAccessToken))
+            
             putString("s3BucketName", config.s3BucketName)
             putString("s3Region", config.s3Region)
-            putString("s3AccessKey", config.s3AccessKey)
-            putString("s3SecretKey", config.s3SecretKey)
+            
+            putString("s3AccessKey_enc", CryptoManager.encryptField(config.s3AccessKey))
+            putString("s3SecretKey_enc", CryptoManager.encryptField(config.s3SecretKey))
+            
             putString("sftpHost", config.sftpHost)
             putInt("sftpPort", config.sftpPort)
             putString("sftpUser", config.sftpUser)
-            putString("sftpPass", config.sftpPass)
+            
+            putString("sftpPass_enc", CryptoManager.encryptField(config.sftpPass))
             putString("sftpPath", config.sftpPath)
+            
+            // Clean up legacy keys to guarantee no leak
+            remove("clientSecret")
+            remove("customAccessToken")
+            remove("s3AccessKey")
+            remove("s3SecretKey")
+            remove("sftpPass")
+            
             apply()
         }
         _currentConfig.value = config
